@@ -5,6 +5,7 @@
     //执行编译过的程序
     "version": "0.2.0",
     "configurations": [
+
         
         {
             "name": "(gdb) Launch",
