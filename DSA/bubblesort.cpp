@@ -3,7 +3,7 @@ using namespace std;
 
 
 //升序冒泡
-void bubbleSort(int A[],int n){//引入待排序列，和问题规模
+void bubbleSort1A(int A[],int n){//引入待排序列，和问题规模
         int sorted = false;
         while (!sorted)
         {
@@ -43,7 +43,7 @@ int main(void){
         cout<<A[i]<<",";
     }
     cout<<endl;
-    bubbleSort(A,5);
+    bubbleSort1A(A,5);
     for (int i = 0; i <5; i++)  //循环输出排序结果
     {
         cout<<A[i]<<",";
