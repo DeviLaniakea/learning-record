@@ -6,7 +6,7 @@ template <typename T> class Vector  //向量模板类，一个参数类型为T�
     
 protected:
 
-    Rank _size; int _capacity; T* _elem;   //规模、容量、数据区
+    Rank _size; int _capacity; T* _elem;   //规模、容量、数据空间
     void copyFrom(T const* A,Rank lo,Rank hi);    //复制数组区间A[lo, hi)
     void expand();      //空间不足时扩容
     void shrink();  //装填因子过小时压缩
@@ -40,6 +40,9 @@ public:
     Vector ( Vector<T> const& V, Rank lo, Rank hi ) { copyFrom ( V._elem, lo, hi ); } //区间
 
     //析构函数
+    /*只需释放用于存放元素的内部
+    数组_elem[]，将其占用的空间交还操作系统。_capacity和_size之类的内部变量无需做任何
+    处理，它们将作为向量对象自身的一部分被系统回收，此后既无需也无法被引用。*/
     ~Vector(){delete[] _elem;}
 
     // 叧读讵问接口
@@ -79,6 +82,8 @@ void Vector<T>::copyFrom(T const* A, Rank lo, Rank hi) { //以数组区间A[lo, 
         _elem[_size++] = A[lo++]; //复制至_elem[0, hi - lo)
 }
 
+//重载向量赋值操作符
+
 /*需强调的是，由于向量内部含有动态分配的空间，默认的运算符"="不足以支持向量之间的直接赋值。
 例如，6.3节将以二维向量形式实现图邻接表，其主向量中的每一元素本身都是一维向量，
 故通过默认赋值运算符，并不能复制向量内部的数据区。为适应此类赋值操作的需求，重载向量的赋值运算符。*/
@@ -94,4 +99,17 @@ Vector<T>& Vector<T>::operator= ( Vector<T> const& V ) { //重载，不过是一
         delete [] _elem; //释放原有内容
     copyFrom ( V._elem, 0, V.size() ); //整体复制
     return *this; //返回当前前对象的引用，以便链式赋值
+}
+
+//空间不足时扩容，应当在执行所有添加操作之前执行
+template <typename T> 
+void Vector<T>::expand(){
+    if ( _size < _capacity ) return; //尚未满员时，无需扩容
+    if ( _capacity < DEFAULT_CAPACITY ) 
+        _capacity = DEFAULT_CAPACITY; //不低于默认最小容量
+    T* oldElem = _elem; 
+    _elem = new T[_capacity <<= 1]; //容量加倍
+    for ( int i = 0; i < _size; i++ )
+        _elem[i] = oldElem[i]; //复制原向量内容（T为基本类型，或已重载赋值操作符'='）
+    delete [] oldElem; //释放原空间
 }
