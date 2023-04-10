@@ -56,7 +56,7 @@ public:
     Rank search ( T const& e, Rank lo, Rank hi ) const; //有序向量区间查找
     // 可写访问接口
     T& operator[] ( Rank r ) const; //重载下标操作符，可以类似于数组形式引用各元素
-    Vector<T> & operator= ( Vector<T> const& ); //重载赋值操作符，以便直接克隆向量
+    Vector<T> &operator=(Vector<T> const &); // 重载赋值操作符，以便直接克隆向量
     T remove ( Rank r ); //删除秩为r的元素
     int remove ( Rank lo, Rank hi ); //删除秩在区间[lo, hi)之内的元素
     Rank insert ( Rank r, T const& e ); //插入元素
@@ -113,3 +113,57 @@ void Vector<T>::expand(){
         _elem[i] = oldElem[i]; //复制原向量内容（T为基本类型，或已重载赋值操作符'='）
     delete [] oldElem; //释放原空间
 }
+
+//重新实现和数组一样的通过下标访问元素的方式
+template <typename T>
+T& Vector<T>::operator[] ( Rank r ) const //重载下标操作符 const 修饰了 Vector<T>::operator[] 成员函数，表示这个函数不会修改它所属的 Vector<T> 对象的状态。这意味着这个函数只能访问向量中的元素，但不能修改它们。
+    { return _elem[r]; } // assert: 0 <= r < _size
+
+
+//置乱算法
+template <typename T> 
+void permute(Vector<T>& V){
+    for (int i = V.size(); i > 0 ; i--)
+    {
+        swap(V[i-1],V[rand()%i])//V[i-1]与V[0,i)中某一随机元素交换
+    }
+}
+
+//区间置乱
+template <typename T> void Vector<T>::unsort ( Rank lo, Rank hi ) { //等概率随机置乱区间[lo, hi)
+    T* V = _elem + lo; //将子向量_elem[lo, hi)视作另一向量V[0, hi - lo)；由于 _elem 是一个指向类型为 T 的元素的指针，所以 _elem + lo 的值是 _elem 加上 lo 个 sizeof(T) 字节的地址。也就是lo位置的首地址
+    for ( Rank i = hi - lo; i > 0; i-- ) //自后向前
+        swap ( V[i - 1], V[rand() % i] ); //将V[i - 1]与V[0, i)中某一元素随机交换
+}
+
+/*上面两个算法中细微的差别：后者是通过下标，直接访问内部数组的元素；
+而前者则是借助重载的操作符“[]”，通过秩间接地访问向量的元素。
+第一个函数 permute 接受一个 Vector<T> 对象作为参数，并使用重载的 [] 操作符通过秩间接访问向量的元素。
+第二个函数 unsort 是一个类的成员函数，它可以直接访问向量的内部数组 _elem。它使用指针运算直接通过内部数组中的索引访问向量的元素。
+*/
+
+//判等和比较大小
+//比较函数为两个重载函数，如果参数为指针，就获取指针对应数据并重新调用比较函数，将数据重新传给比较函数，此时比较函数重载为数值比较，并返回结果。
+template <typename T> 
+static bool lt ( T* a, T* b ) { return lt ( *a, *b ); } //less than
+
+template <typename T> 
+static bool lt ( T& a, T& b ) { return a < b; } //less than
+
+template <typename T> 
+static bool eq ( T* a, T* b ) { return eq ( *a, *b ); } //equal
+
+template <typename T> 
+static bool eq ( T& a, T& b ) { return a == b; } //equal
+
+
+//查找函数
+/*其中有三处细节：1.从后往前比较：由于约定了如果有多个相同元素，返回最大的那个，于是从后往前比较，发现的第一个就是最大的，可以直接返回了，减少了不必要的比较
+2.查找失败的返回：选择统一返回最终的比较元素的rank，在从后往前比较时，查找失败返回-1负数既有失败的含义，便于理解，又可假想在数组开始0的位置的左侧有个哨兵，返回哨兵表示查找失败
+3.使用while循环而非for循环：由于在循环控制语句中有两个判断语句，由于C/C++语言在前一判断非真后循环会立即终止，而不致因试图引用已越界的秩（-1）而出错。*/
+template <typename T> //无序向量的顺序查找：返回最后一个元素e的位置；失败时，返回lo - 1
+Rank Vector<T>::find(T const& e,Rank lo,Rank hi ) const{
+    while ((lo<hi--)&&(e!=_elem[hi]))//右界大于左界并且右界位置元素和e不相同时，右界左移一位再次进行两个括号内的比较
+    return hi;//若hi < lo，则意味着失败；否则hi即命中元素的秩
+    }
+
