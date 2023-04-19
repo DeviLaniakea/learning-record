@@ -211,3 +211,32 @@ int Vector<T>::deduplicate(){
     return oldSize - _size; //返回删除元素数量
     
 }
+
+
+//遍历
+/*为了灵活性需要将基本操作作为参数传入遍历函数，基本方法有函数指针和函数对象两种，函数对象是将一个封装了功能的对象重载括号运算符后使用方法和函数统一的一个对象，
+因此他们的核心区别是，作为对象函数对象可以贯穿于原函数的整个生命周期，而函数指针只能一次一次的原子化调用*/
+template <typename T> 
+void Vector<T>::traverse ( void ( *visit ) ( T& ) ) //借助函数指针机制
+    { 
+        for ( int i = 0; i < _size; i++ ) 
+        visit ( _elem[i] ); 
+    } //遍历向量
+
+template <typename T> 
+template <typename VST> //元素类型、操作器
+void Vector<T>::traverse ( VST& visit ) //借助函数对象机制
+    { 
+        for ( int i = 0; i < _size; i++ ) 
+        visit ( _elem[i] ); 
+    } //遍历向量
+
+
+//遍历函数的实例：全部自+1操作——Increase<T>()
+template <typename T> 
+struct Increase //操作器：递增一个T类对象
+    { virtual void operator() ( T& e ) { e++; } }; //重载括号操作符；假设T可直接递增或已重载++操作符
+
+template <typename T> 
+void increase ( Vector<T> & V ) //统一递增向量中的各元素，传入一个T引用类型的参数V
+    { V.traverse ( Increase<T>() ); } //以操作器Increase<T>()为基本操作，调用向量V中的traverse方法运行遍历
