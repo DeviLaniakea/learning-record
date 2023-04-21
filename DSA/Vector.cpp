@@ -67,6 +67,7 @@ public:
     void unsort() { unsort ( 0, _size ); } //整体置乱
     int deduplicate(); //无序去重
     int uniquify(); //有序去重
+    int uniquify1B();//有序去重高效版
     // 遍历
     void traverse ( void (* ) ( T& ) ); //遍历（使用函数指针，只读或局部性修改）
     template <typename VST> void traverse ( VST& ); //遍历（使用函数对象，可全局性修改）
@@ -240,3 +241,34 @@ struct Increase //操作器：递增一个T类对象
 template <typename T> 
 void increase ( Vector<T> & V ) //统一递增向量中的各元素，传入一个T引用类型的参数V
     { V.traverse ( Increase<T>() ); } //以操作器Increase<T>()为基本操作，调用向量V中的traverse方法运行遍历
+
+    
+//判断是否有序，返回向量中逆序相邻元素对的总数；
+template <typename T> 
+int Vector<T>::disordered() const { //被声明为const意味着函数不能修改类的成员变量。
+    int n = 0; //计数器
+    for ( int i = 1; i < _size; i++ ) //逐一检查“_size - 1”对相邻元素
+        if ( _elem[i - 1] > _elem[i] ) n++; //逆序则计数
+    return n; //n = 0表示升序有序
+}
+
+//有序向量重复元素剔除算法（低效版）
+template <typename T> 
+int Vector<T>::uniquify() { 
+    int oldSize = _size;     int i = 1; //当前比对元素的秩，和起始于首元素
+    while ( i < _size ) //从前向后，逐一比对各对相邻元素
+        _elem[i - 1] == _elem[i] ? remove ( i ) : i++; //若雷同，则删除后者；否则，转至后一元素
+    return oldSize - _size; //向量规模变化量，即被删除元素总数
+}
+
+
+//有序向量重复元素剔除算法（高效版）
+ template <typename T> 
+ int Vector<T>::uniquify1B() { 
+    Rank i = 0, j = 0; //各对互异“相邻”元素的秩
+    while ( ++j < _size ) //逐一扫描，直至末元素
+        if ( _elem[i] != _elem[j] ) //跳过雷同者
+            _elem[++i] = _elem[j]; //发现不同元素时，向前移至紧邻于前者的右侧
+            _size = ++i; shrink(); //直接截除尾部多余元素
+    return j - i; //向量规模变化量，即被删除元素总数
+}
