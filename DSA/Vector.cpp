@@ -266,9 +266,38 @@ int Vector<T>::uniquify() {
  template <typename T> 
  int Vector<T>::uniquify1B() { 
     Rank i = 0, j = 0; //各对互异“相邻”元素的秩
-    while ( ++j < _size ) //逐一扫描，直至末元素
+    while ( ++j < _size ) //逐一扫描，直至末元素，j置0先j++再判断合法范围的目的不知道是什么
         if ( _elem[i] != _elem[j] ) //跳过雷同者
-            _elem[++i] = _elem[j]; //发现不同元素时，向前移至紧邻于前者的右侧
-            _size = ++i; shrink(); //直接截除尾部多余元素
-    return j - i; //向量规模变化量，即被删除元素总数
+            _elem[++i] = _elem[j]; //发现不同元素时，向前移至i右侧的位置
+            _size = ++i; //直接截除尾部多余元素
+            shrink(); 
+    return j-i; //向量规模变化量，即被删除元素总数
 }
+
+
+//查找的统一接口
+/*鉴于有序查找的算法多样且各具特点，为便于测试，这里的接口不妨随机选择查找算法。
+实际应用中可根据问题的特点具体确定，并做适当微调。*/
+template <typename T> //在有序向量的区间[lo, hi)内，确定不大于e的最后一个节点的秩
+Rank Vector<T>::search ( T const& e, Rank lo, Rank hi ) const { //assert: 0 <= lo < hi <= _size
+    return ( rand() % 2 ) ? binSearch ( _elem, e, lo, hi ) : fibSearch ( _elem, e, lo, hi );//按各50%的概率随机使用二分查找或Fibonacci查找
+}
+
+
+
+//二分查找版本A
+template <typename T> 
+static Rank binSearch ( T* A, T const& e, Rank lo, Rank hi ) {// 在有序向量的区间[lo, hi)内查找元素e，0 <= lo <= hi <= _size，都是半开区间
+while ( lo < hi ) { //每步迭代可能要做两次比较判断，有三个分支
+    Rank mi = ( lo + hi ) >> 1; //以中点为轴点，半开区间中，如[0,4),中轴是2，[3,6)，位移运算向下取整。避免溢出。另外，向下取整同时左取中值又取中值+1也可以保证在左右两边搜索时不会漏掉某个元素。
+        if ( e < A[mi] ) 
+            hi = mi; //深入前半段[lo, mi)继续查找
+        else if ( A[mi] < e ) 
+            lo = mi + 1; //深入后半段(mi, hi)继续查找
+        else return mi; //在mi处命中
+} //成功查找可以提前终止
+return -1; //查找失败
+} //有多个命中元素时，不能保证返回秩最大者；查找失败时，简单地返回-1，而不能指示失败的位置
+
+
+
