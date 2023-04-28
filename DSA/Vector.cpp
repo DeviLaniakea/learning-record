@@ -10,13 +10,13 @@ protected:
     void copyFrom(T const* A,Rank lo,Rank hi);    //复制数组区间A[lo, hi)
     void expand();      //空间不足时扩容
     void shrink();  //装填因子过小时压缩
-    void bubble(Rank lo,Rank hi);   //扫描交换
+    bool bubble(Rank lo,Rank hi);   //扫描交换
     void bubbleSort(Rank lo,Rank hi);   //冒泡排序算法
     Rank max(Rank lo,Rank hi);  //选择最大元素
     void selectionSort(Rank lo,Rank hi);    //选择排序算法
-    void merge(Rank lo,Rank hi);    //归并算法
+    void merge(Rank lo,Rank mi, Rank hi);    //归并算法
     void mergeSort(Rank lo,Rank hi);    //归并排序算法
-    Rank partition(Rank lo,Rank hi);    //轴点构造法
+    Rank partition(Rank lo, Rank hi);   // 轴点构造法
     void quickSort(Rank lo,Rank hi);    //快速排序算法
     void heapSort(Rank lo,Rank hi);     //堆排序
 
@@ -339,3 +339,55 @@ while ( lo < hi ) { //每步迭代仅需做一次比较判断，有两个分支
 } //成功查找不能提前终止
 return --lo; //循环结束时，lo为大于e的元素的最小秩，故lo - 1即不大于e的元素的最大秩
 } //有多个命中元素时，总能保证返回秩最大者；查找失败时，能够返回失败的位置
+
+
+template <typename T> void Vector<T>::sort ( Rank lo, Rank hi ) { //向量匙间[lo, hi)排序
+switch ( rand() % 5 ) { //随机选叏排序算法。可根据具体问题癿特点灵活选叏戒扩充
+    case 1: bubbleSort ( lo, hi ); break; //起泡排序
+    case 2: selectionSort ( lo, hi ); break; //选择排序（习题）
+    case 3: mergeSort ( lo, hi ); break; //弻幵排序
+    case 4: heapSort ( lo, hi ); break; //堆排序（稍后介绍）
+    default: quickSort ( lo, hi ); break; //快速排序（稍后介绍）
+    }
+}
+
+
+template <typename T> //向量的起泡排序
+void Vector<T>::bubbleSort ( Rank lo, Rank hi ) //assert: 0 <= lo < hi <= size
+{ while ( !bubble ( lo, hi-- ) ); } //逐趟做扫描交换，直至全序
+
+
+template <typename T> 
+bool Vector<T>::bubble ( Rank lo, Rank hi ) { //一趟扫描交换
+    bool sorted = true; //整体有序标志
+    while ( ++lo < hi ) //自左向右，逐一检查各对相邻元素
+        if ( _elem[lo - 1] > _elem[lo] ) { //若逆序，则
+            sorted = false; //意味着尚未整体有序，需要通过交换使局部有序
+            swap ( _elem[lo - 1], _elem[lo] ); 
+    }
+return sorted; //返回有序标志
+}
+
+
+//归并排序的框架：
+/*通过递归的方式，深入最里层将向量分割成两个最小长度元素，然后从短到长依次将不同的两个向量归并再归并。
+从而也实现了归并子列总是有序，毕竟只有有序的两个子列才可以进行归并*/
+template <typename T> //向量归并排序
+void Vector<T>::mergeSort ( Rank lo, Rank hi ) { //0 <= lo < hi <= size
+    if ( hi - lo < 2 ) return; //单元素区间自然有序，否则...
+    int mi = ( lo + hi ) >> 1; mergeSort ( lo, mi ); mergeSort ( mi, hi ); //以中点为界分别排序
+    merge ( lo, mi, hi ); //归并：
+}
+
+template <typename T> //有序向量的归并
+void Vector<T>::merge ( Rank lo, Rank mi, Rank hi ) { //各自有序的子向量[lo, mi)和[mi, hi)
+    T* A = _elem + lo; //合并后的向量A[0, hi - lo) = _elem[lo, hi)，于是通过原始向量的地址，将lo位置作为向量A的首地址
+    int lb = mi - lo; T* B = new T[lb]; //前子向量B[0, lb) = _elem[lo, mi)
+    for ( Rank i = 0; i < lb; B[i] = A[i++] ); //复制前子向量
+    int lc = hi - mi; T* C = _elem + mi; //后子向量C[0, lc) = _elem[mi, hi)
+    for ( Rank i = 0, j = 0, k = 0; ( j < lb ) || ( k < lc ); ) { //B[j]和C[k]中的小者续至A末尾
+        if ( ( j < lb ) && ( ! ( k < lc ) || ( B[j] <= C[k] ) ) ) A[i++] = B[j++];//当B的头部小时，B的头部进A；或者当C子列空了并且B子列没空时，B的头部继续进A
+        if ( ( k < lc ) && ( ! ( j < lb ) || ( C[k] < B[j] ) ) ) A[i++] = C[k++];
+ }
+ delete [] B; //释放临时空间B
+} //归并后得到完整的有序向量[lo, hi)
