@@ -287,7 +287,7 @@ Rank Vector<T>::search ( T const& e, Rank lo, Rank hi ) const { //assert: 0 <= l
 
 //二分查找版本A
 template <typename T> 
-static Rank binSearchA ( T* A, T const& e, Rank lo, Rank hi ) {// 在有序向量的区间[lo, hi)内查找元素e，0 <= lo <= hi <= _size，都是半开区间，
+static Rank binSearchA ( T* A, T const& e, Rank lo, Ranßk hi ) {// 在有序向量的区间[lo, hi)内查找元素e，0 <= lo <= hi <= _size，都是半开区间，
 while ( lo < hi ) { //每步迭代可能要做两次比较判断，有三个分支
     Rank mi = ( lo + hi ) >> 1; //以中点为轴点，半开区间中，如[0,4),中轴是2，[3,6)，位移运算向下取整。避免溢出。另外，向下取整同时左取中值又取中值+1也可以保证在左右两边搜索时不会漏掉某个元素。
         if ( e < A[mi] ) 
@@ -301,6 +301,7 @@ return -1; //在while循环中，没有出现等于的情况，并且lo不<hi了
 
 
  #include "..\fibonacci\Fib.h" //引入Fib数列类
+
 // Fibonacci查找算法（版本A）：在有序向量的区间[lo, hi)内查找元素e，0 <= lo <= hi <= _size
 template <typename T> 
 static Rank fibSearch ( T* A, T const& e, Rank lo, Rank hi ) {
