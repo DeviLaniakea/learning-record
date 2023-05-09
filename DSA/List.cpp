@@ -89,3 +89,52 @@ ListNodePosi(T) List<T>::find ( T const& e, int n, ListNodePosi(T) p ) const {
             return p; //逐个比对，直至命中或范围越界
     return NULL; //p越出左边界意味着区间内不含e，查找失败
 } //失败时，返回NULL
+
+
+//插入接口
+template <typename T> 
+ListNodePosi(T) List<T>::insertAsFirst ( T const& e )
+    { 
+        _size++; return header->insertAsSucc ( e ); //header是指针，调用他指向的对象的内部方法需要用->,如果是对象本身去调用方法，用点即可。
+    } //e当作首节点插入
+template <typename T> 
+ListNodePosi(T) List<T>::insertAsLast ( T const& e )
+    { 
+        _size++; return trailer->insertAsPred ( e ); 
+    } //e当作末节点插入
+template <typename T> 
+ListNodePosi(T) List<T>::insertA ( ListNodePosi(T) p, T const& e )
+    { 
+        _size++; return p->insertAsSucc ( e ); 
+    } //e当作p的后继插入（After）
+template <typename T> 
+ListNodePosi(T) List<T>::insertB ( ListNodePosi(T) p, T const& e )
+    { 
+        _size++; return p->insertAsPred ( e ); 
+    } //e当作p的前驱插入（Before）
+
+
+
+template <typename T> //列表内部斱法：复刢列表中自位置p起癿n项
+void List<T>::copyNodes ( ListNodePosi(T) p, int n ) { //p合法，且至少有n-1个真后继节点
+    init(); //创建头、尾哨兵节点并做初始化
+    while ( n-- ) { insertAsLast ( p->data ); p = p->succ; } //将起自p的n项依次作为末节点插入
+}
+
+template <typename T> //复制列表中自位置p起的n项（assert: p为合法位置，且至少有n-1个后继节点）
+List<T>::List ( ListNodePosi(T) p, int n ) { copyNodes ( p, n ); }
+
+template <typename T> //整体复制列表L
+List<T>::List ( List<T> const& L ) { copyNodes ( L.first(), L._size ); }
+
+template <typename T> //复制L中自第r项起的n项（assert: r+n <= L._size）
+List<T>::List ( List<T> const& L, int r, int n ) { copyNodes ( L[r], n ); }
+
+
+template <typename T> 
+T List<T>::remove ( ListNodePosi(T) p ) { //删除合法节点p，返回其数值
+    T e = p->data; //备份待删除节点的数值（假定T类型可直接赋值）
+    p->pred->succ = p->succ; p->succ->pred = p->pred; //将p的前驱的后继指向p的后继，将p的后继的前驱指向p的前驱
+    delete p; _size--; //释放节点，更新规模
+    return e; //返回备份的数值
+}
