@@ -259,3 +259,25 @@ ListNodePosi(T) List<T>::selectMax ( ListNodePosi(T) p, int n ) {
         max = cur; //更新最大元素位置记录
     return max; //返回最大节点位置
 }
+
+
+//有序列表的通用归并：当前列表中自p起的n个元素，与列表L中自q起的m个元素归并
+template <typename T> 
+void List<T>::merge ( ListNodePosi(T) & p, int n, List<T>& L, ListNodePosi(T) q, int m ) {
+// assert: this.valid(p) && rank(p) + n <= size && this.sorted(p, n)
+// L.valid(q) && rank(q) + m <= L._size && L.sorted(q, m)
+// 注意：在归并排序之类的场合，有可能 this == L && rank(p) + n = rank(q)
+ListNodePosi(T) pp = p->pred; //借助前驱（可能是header），以便返回前 ...
+while ( 0 < m ) //当前列表尚未归完
+    if ( ( 0 < n ) && ( p->data <= q->data ) ) //归并列表L非空且v(p) <= v(q)，则
+        { 
+            if ( q == ( p = p->succ ) ) 
+                break; 
+            n--; //p归入合并的列表，并替换为其直接后继
+        } 
+    else //若p已超出右界或v(q) < v(p)，则
+        { 
+            insertB ( p, L.remove ( ( q = q->succ )->pred ) ); m--;  //将q转至p之前
+        }
+    p = pp->succ; //确定归并后区间的（新）起点
+}
