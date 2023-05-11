@@ -41,7 +41,7 @@ ListNodePosi(T) search ( T const& e ) const //有序列表查找
 ListNodePosi(T) search ( T const& e, int n, ListNodePosi(T) p ) const; //有序区间查找 
 ListNodePosi(T) selectMax ( ListNodePosi(T) p, int n ); //在p及其n-1个后继中选出最大者 
 ListNodePosi(T) selectMax() { return selectMax ( header->succ, _size ); } //整体最大者 
-//可写讵问接口
+//可写访问接口
 ListNodePosi(T) insertAsFirst ( T const& e ); //将e当作首节点插入
 ListNodePosi(T) insertAsLast ( T const& e ); //将e当作末节点插入
 ListNodePosi(T) insertA ( ListNodePosi(T) p, T const& e ); //将e当作p的后继插入 
@@ -268,16 +268,28 @@ void List<T>::merge ( ListNodePosi(T) & p, int n, List<T>& L, ListNodePosi(T) q,
 // L.valid(q) && rank(q) + m <= L._size && L.sorted(q, m)
 // 注意：在归并排序之类的场合，有可能 this == L && rank(p) + n = rank(q)
 ListNodePosi(T) pp = p->pred; //借助前驱（可能是header），以便返回前 ...
-while ( 0 < m ) //当前列表尚未归完
+while ( 0 < m ) //当前列表尚未归并完
     if ( ( 0 < n ) && ( p->data <= q->data ) ) //归并列表L非空且v(p) <= v(q)，则
         { 
-            if ( q == ( p = p->succ ) ) 
+            if ( q == ( p = p->succ ) ) //通过将p的指针后移的方式将当前p归入合并的列表。如果是在同一列表中进行归并，判断p是否等于p，如果等于意味着p已经排完，已经整体有序，可以直接退出。
                 break; 
-            n--; //p归入合并的列表，并替换为其直接后继
+            n--; 
         } 
-    else //若p已超出右界或v(q) < v(p)，则
+    else //若p已超出右界或v(q) < v(p)，则将q转至p之前
         { 
-            insertB ( p, L.remove ( ( q = q->succ )->pred ) ); m--;  //将q转至p之前
+            insertB ( p, L.remove ( ( q = q->succ )->pred ) ); //将q指针后移，并且删除新q的前驱，删除函数会返回该前驱结点，然后对p前插该节点
+            m--;  
         }
-    p = pp->succ; //确定归并后区间的（新）起点
+    p = pp->succ; //归并完成后将列表头重新给p
 }
+
+//归并排序：对起始于位置p的n个元素排序
+template <typename T>
+void List<T>::mergeSort ( ListNodePosi(T) & p, int n ) { //valid(p) && rank(p) + n <= size
+    if ( n < 2 ) return; //若待排序范围已足够小，则直接返回;否则...
+    int m = n >> 1; //以中点为界
+    ListNodePosi(T) q = p; 
+    for ( int i = 0; i < m; i++ ) q = q->succ; //由于不能循秩访问，中点m处的节点所在的位置需要从p开始依次寻过去。
+    mergeSort ( p, m ); mergeSort ( q, n - m ); //对前、后子列表分别排序
+    merge ( p, m, *this, q, n - m ); //归并
+} //注意:排序后，p依然指向归并后区间的(新)起点
